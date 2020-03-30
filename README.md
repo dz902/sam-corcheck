@@ -1,153 +1,105 @@
-# corcheck
+# AWS SAM 简易体温收集工具演示
 
-This project contains source code and supporting files for a serverless application that you can deploy with the AWS Serverless Application Model (AWS SAM) command line interface (CLI). It includes the following files and folders:
+使用 AWS SAM 来创建一个简易的体温收集工具，支持本地调试、云端部署。
 
-- `src` - Code for the application's Lambda function.
-- `events` - Invocation events that you can use to invoke the function.
-- `__tests__` - Unit tests for the application code. 
-- `template.yml` - A template that defines the application's AWS resources.
+## 免责声明
 
-The application uses several AWS resources, including Lambda functions, an API Gateway API, and Amazon DynamoDB tables. These resources are defined in the `template.yml` file in this project. You can update the template to add AWS resources through the same deployment process that updates your application code.
+建议测试过程中使用此方案，生产环境使用请自行考虑评估。
 
-If you prefer to use an integrated development environment (IDE) to build and test your application, you can use the AWS Toolkit.  
-The AWS Toolkit is an open-source plugin for popular IDEs that uses the AWS SAM CLI to build and deploy serverless applications on AWS. The AWS Toolkit also adds step-through debugging for Lambda function code. 
+当您对方案需要进一步的沟通和反馈后，可以联系 nwcd_labs@nwcdcloud.cn 获得更进一步的支持。
 
-To get started, see the following:
+欢迎联系参与方案共建和提交方案需求, 也欢迎在 github 项目issue中留言反馈bugs。
 
-* [PyCharm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [IntelliJ](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html)
-* [Visual Studio](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/welcome.html)
+## 使用方式
 
-## Deploy the sample application
+### 准备工作
 
-The AWS SAM CLI is an extension of the AWS CLI that adds functionality for building and testing Lambda applications. It uses Docker to run your functions in an Amazon Linux environment that matches Lambda. It can also emulate your application's build environment and API.
+安装：
 
-To use the AWS SAM CLI, you need the following tools:
+- [AWS 命令行工具](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
+- [SAM 命令行工具](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
+- [Docker](https://docs.docker.com/install/)
 
-* AWS SAM CLI - [Install the AWS SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html).
-* Node.js - [Install Node.js 10](https://nodejs.org/en/), including the npm package management tool.
-* Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community).
+确定 Docker 处于运行状态。
 
-To build and deploy your application for the first time, run the following in your shell:
+### 本地启动 DynamoDB Local
 
-```bash
-sam build
-sam deploy --guided
-```
-
-The first command will build the source of your application. The second command will package and deploy your application to AWS, with a series of prompts:
-
-* **Stack Name**: The name of the stack to deploy to CloudFormation. This should be unique to your account and region, and a good starting point would be something matching your project name.
-* **AWS Region**: The AWS region you want to deploy your app to.
-* **Confirm changes before deploy**: If set to yes, any change sets will be shown to you before execution for manual review. If set to no, the AWS SAM CLI will automatically deploy application changes.
-* **Allow SAM CLI IAM role creation**: Many AWS SAM templates, including this example, create AWS IAM roles required for the AWS Lambda function(s) included to access AWS services. By default, these are scoped down to minimum required permissions. To deploy an AWS CloudFormation stack which creates or modified IAM roles, the `CAPABILITY_IAM` value for `capabilities` must be provided. If permission isn't provided through this prompt, to deploy this example you must explicitly pass `--capabilities CAPABILITY_IAM` to the `sam deploy` command.
-* **Save arguments to samconfig.toml**: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run `sam deploy` without parameters to deploy changes to your application.
-
-The API Gateway endpoint API will be displayed in the outputs when the deployment is complete.
-
-## Use the AWS SAM CLI to build and test locally
-
-Build your application by using the `sam build` command.
-
-```bash
-my-application$ sam build
-```
-
-The AWS SAM CLI installs dependencies that are defined in `package.json`, creates a deployment package, and saves it in the `.aws-sam/build` folder.
-
-Test a single function by invoking it directly with a test event. An event is a JSON document that represents the input that the function receives from the event source. Test events are included in the `events` folder in this project.
-
-Run functions locally and invoke them with the `sam local invoke` command.
-
-```bash
-my-application$ sam local invoke putItemFunction --event events/event-post-item.json
-my-application$ sam local invoke getAllItemsFunction --event events/event-get-all-items.json
-```
-
-The AWS SAM CLI can also emulate your application's API. Use the `sam local start-api` command to run the API locally on port 3000.
-
-```bash
-my-application$ sam local start-api
-my-application$ curl http://localhost:3000/
-```
-
-The AWS SAM CLI reads the application template to determine the API's routes and the functions that they invoke. The `Events` property on each function's definition includes the route and method for each path.
-
-```yaml
-      Events:
-        Api:
-          Type: Api
-          Properties:
-            Path: /
-            Method: GET
-```
-
-## Add a resource to your application
-The application template uses AWS SAM to define application resources. AWS SAM is an extension of AWS CloudFormation with a simpler syntax for configuring common serverless application resources, such as functions, triggers, and APIs. For resources that aren't included in the [AWS SAM specification](https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md), you can use the standard [AWS CloudFormation resource types](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-template-resource-type-ref.html).
-
-Update `template.yml` to add a dead-letter queue to your application. In the **Resources** section, add a resource named **MyQueue** with the type **AWS::SQS::Queue**. Then add a property to the **AWS::Serverless::Function** resource named **DeadLetterQueue** that targets the queue's Amazon Resource Name (ARN), and a policy that grants the function permission to access the queue.
+在 `corcheck` 目录下运行：
 
 ```
-Resources:
-  MyQueue:
-    Type: AWS::SQS::Queue
-  getAllItemsFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: src/handlers/get-all-items.getAllItemsHandler
-      Runtime: nodejs10.x
-      DeadLetterQueue:
-        Type: SQS 
-        TargetArn: !GetAtt MyQueue.Arn
-      Policies:
-        - SQSSendMessagePolicy:
-            QueueName: !GetAtt MyQueue.QueueName
+docker run -p 8000:8000 \
+           --name dynamodb \
+           --network local-dev \
+           --network-alias=dynamodb \
+           amazon/dynamodb-local \
+           -jar DynamoDBLocal.jar -inMemory -sharedDb
 ```
 
-The dead-letter queue is a location for Lambda to send events that could not be processed. It's only used if you invoke your function asynchronously, but it's useful here to show how you can modify your application's resources and function configuration.
+再运行如下命令来创建表：
 
-Deploy the updated application.
-
-```bash
-my-application$ sam deploy
+```
+aws dynamodb create-table \
+    --endpoint-url http://localhost:8000 \
+    --table-name SampleTable \
+    --key-schema "$(cat keys.json)" \
+    --attribute-definitions "$(cat scheme.json)" \
+    --provisioned-throughput=ReadCapacityUnits=1,WriteCapacityUnits=1
 ```
 
-Open the [**Applications**](https://console.aws.amazon.com/lambda/home#/applications) page of the Lambda console, and choose your application. When the deployment completes, view the application resources on the **Overview** tab to see the new resource. Then, choose the function to see the updated configuration that specifies the dead-letter queue.
+### 本地启动 API Gateway + Lambda
 
-## Fetch, tail, and filter Lambda function logs
+在 `corcheck` 目录下运行：
 
-To simplify troubleshooting, the AWS SAM CLI has a command called `sam logs`. `sam logs` lets you fetch logs that are generated by your Lambda function from the command line. In addition to printing the logs on the terminal, this command has several nifty features to help you quickly find the bug.
-
-**NOTE:** This command works for all Lambda functions, not just the ones you deploy using AWS SAM.
-
-```bash
-my-application$ sam logs -n putItemFunction --stack-name sam-app --tail
+```
+sam local start-api --docker-network local-dev
 ```
 
-**NOTE:** This uses the logical name of the function within the stack. This is the correct name to use when searching logs inside an AWS Lambda function within a CloudFormation stack, even if the deployed function name varies due to CloudFormation's unique resource name generation.
+保持这个窗口不关闭，再切换一个新的命令行窗口，运行：
 
-You can find more information and examples about filtering Lambda function logs in the [AWS SAM CLI documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-logging.html).
-
-## Unit tests
-
-Tests are defined in the `__tests__` folder in this project. Use `npm` to install the [Jest test framework](https://jestjs.io/) and run unit tests.
-
-```bash
-my-application$ npm install
-my-application$ npm run test
+```
+curl http://localhost:3000
 ```
 
-## Cleanup
+进行测试。
 
-To delete the sample application that you created, use the AWS CLI. Assuming you used your project name for the stack name, you can run the following:
+### 本地启动 Web 服务器并测试
 
-```bash
-aws cloudformation delete-stack --stack-name corcheck
+进入 `corcheck/web` 目录，运行：
+
+```
+python -m http.server 8888
 ```
 
-## Resources
+打开浏览器的 `http://localhost:8888/form.html` 来输入信息，并到 `http://localhost:8888/list.html` 查看结果。确认可用。
 
-For an introduction to the AWS SAM specification, the AWS SAM CLI, and serverless application concepts, see the [AWS SAM Developer Guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html).
+### 正式部署
 
-Next, you can use the AWS Serverless Application Repository to deploy ready-to-use apps that go beyond Hello World samples and learn how authors developed their applications. For more information, see the [AWS Serverless Application Repository main page](https://aws.amazon.com/serverless/serverlessrepo/) and the [AWS Serverless Application Repository Developer Guide](https://docs.aws.amazon.com/serverlessrepo/latest/devguide/what-is-serverlessrepo.html).
+在 `corcheck` 目录执行：
+
+
+```
+sam deploy --stack-name sam-test \
+           --bucket-name sam-test-s3 \
+           --capabilities CAPABILITY_IAM
+```
+
+即可部署。
+
+### 修改前端页面
+
+到 AWS 控制台（网页端）找到 API Gateway 服务，进入 Dashboard，复制 API Gateway 地址。用真实地址替换 `form.html` 和 `list.html` 中的 `https://xxxxxxxxx.execute-api.cn-northwest-1.amazonaws.com.cn/Prod/` 占位字符串。
+
+### 上传前端页面
+
+将前端上传到 S3 或其他 Web 服务器。由于中国区 Web 端口需要备案，请确保前端网页可以正常访问。
+
+上传完毕后，访问该前端页面地址，即可使用。
+
+### 销毁资源
+
+测试完毕后，删除前端页面，进入 AWS 控制台找到 CloudFormation 服务，删除名为 `sam-test` 的 Stack。
+
+## 限制
+
+- HTTP 请求未带鉴权措施，所以 API Gateway 未做 CORS 配置。
+- 未对数据来源、数据格式、重复数据等进行清理。
