@@ -2,13 +2,15 @@
 
 使用 AWS SAM 来创建一个简易的体温收集工具，支持本地调试、云端部署。
 
+![](s1.png)
+
 ## 免责声明
 
 建议测试过程中使用此方案，生产环境使用请自行考虑评估。
 
 当您对方案需要进一步的沟通和反馈后，可以联系 nwcd_labs@nwcdcloud.cn 获得更进一步的支持。
 
-欢迎联系参与方案共建和提交方案需求, 也欢迎在 github 项目issue中留言反馈bugs。
+欢迎联系参与方案共建和提交方案需求，也欢迎在 GitHub 项目 issues 中留言反馈 Bug。
 
 ## 使用方式
 
@@ -87,7 +89,7 @@ sam deploy --stack-name sam-test \
 
 ### 修改前端页面
 
-到 AWS 控制台（网页端）找到 API Gateway 服务，进入 Dashboard，复制 API Gateway 地址。用真实地址替换 `form.html` 和 `list.html` 中的 `https://xxxxxxxxx.execute-api.cn-northwest-1.amazonaws.com.cn/Prod/` 占位字符串。
+到 AWS 控制台（网页端）找到 API Gateway 服务，进入 Dashboard，复制 API Gateway 地址。用真实地址替换 `form.html` 和 `list.html` 中的 `https://xxxxxxxxx.execute-api.cn-northwest-1.amazonaws.com.cn/Prod/` 占位字符串。由于中国区需要备案，可以使用已备案的域名通过 `CNAME` 方式指向 API Gateway。
 
 ### 上传前端页面
 
